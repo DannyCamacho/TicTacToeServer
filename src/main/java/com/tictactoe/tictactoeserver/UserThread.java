@@ -73,16 +73,14 @@ public class UserThread extends Thread {
                 while (true) {
                     message = inputFromClient.readObject();
                     if (message instanceof PlayerMoveSend) {
-                        server.print("Returning move to " + ((PlayerMoveResult) message).GameName() + "\n");
+                        server.print("Returning move to " + ((PlayerMoveSend) message).GameName() + "\n");
                         server.updateGameList(this);
                     } else if (message instanceof GameControllerConnection) {
                         if (!((GameControllerConnection) message).connection()) {
                             break;
                         }
                     } else if (message instanceof PlayerMoveResult) {
-                        System.out.println("IN PLAYERMOVERESULT");
                         server.broadcastMove(((PlayerMoveResult) message).GameName(), (PlayerMoveResult) message);
-                        System.out.println(((PlayerMoveResult) message).GameName());
                     }
                 }
             }
