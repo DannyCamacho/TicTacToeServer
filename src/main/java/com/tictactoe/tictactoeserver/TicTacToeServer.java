@@ -56,7 +56,6 @@ public class TicTacToeServer {
 
     void addUserName(String userName) {
         userNames.add(userName);
-        Platform.runLater( () -> controller.addClient(userName));
     }
 
     void addUserThread(UserThread userThread) {
@@ -72,7 +71,6 @@ public class TicTacToeServer {
             if (Objects.equals(gameExists, game))
                 return false;
         }
-        Platform.runLater( () -> controller.addGame(game));
         games.add(game);
         return true;
     }
@@ -86,12 +84,10 @@ public class TicTacToeServer {
     void removeUser(String userName, UserThread aUser) {
         boolean removed = userNames.remove(userName);
         if (removed) userThreads.remove(aUser);
-        Platform.runLater( () -> controller.removeClient(userName));
     }
 
     void removeGame(String game) {
         games.remove(game);
-        Platform.runLater( () -> controller.removeGame(game));
     }
 
     Set<String> getUserNames() {
