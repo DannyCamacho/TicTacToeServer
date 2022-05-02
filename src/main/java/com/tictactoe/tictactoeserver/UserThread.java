@@ -10,9 +10,8 @@ import java.util.Objects;
 public class UserThread extends Thread {
     private final Socket socket;
     private final TicTacToeServer server;
+    private ObjectOutputStream output;
     private String userName;
-    private ObjectInputStream inputFromClient;
-    private ObjectOutputStream outputToClient;
 
     public UserThread(Socket socket, TicTacToeServer server) {
         this.socket = socket;
@@ -21,80 +20,92 @@ public class UserThread extends Thread {
 
     public void run() {
         try {
-            outputToClient = new ObjectOutputStream(socket.getOutputStream());
-            inputFromClient = new ObjectInputStream(socket.getInputStream());
-
+            output = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
             InetAddress inetAddress = socket.getInetAddress();
-            Object message = inputFromClient.readObject();
+            Object message = input.readObject();
 
-            if (message instanceof ServerConnection) {
-                userName = ((ServerConnection) message).userName();
-                server.addUserName(userName);
+            if (Objects.equals(((ServerConnection)message).connectType(), "Player")) {
+                userName = ((ServerConnection)message).userName();
                 server.print("Starting thread for Client " + inetAddress.getHostName() + " at " + new Date() + '\n');
                 server.print("Client's username is " + userName + " (IP Address: " + inetAddress.getHostAddress() + ")\n");
-                sendMessage(new ServerConnection(null, true));
-
+                server.updateManager(message);
+                server.updateManager(new GameListRequest(userName));
                 while (true) {
-                    message = inputFromClient.readObject();
+                    message = input.readObject();
                     if (message instanceof GameListRequest) {
-                        server.print("User " + userName + " Game List refresh\n");
-                        server.updateGameList(this);
+                        server.updateManager(message);
                     } else if (message instanceof ConnectToGame) {
-                        String gameName = ((ConnectToGame) message).gameName();
-                        if (server.addGame(gameName)) server.print(userName + " created new game " + gameName + " at " + new Date() + "\n");
-                        else server.print(userName + " connected to existing game " + gameName + " at " + new Date() + "\n");
-                        int gameCount = server.addPlayerToGame(gameName, this);
-                        switch (gameCount) {
-                            case 1 -> sendMessage(new ConnectToGame(gameName, null, 'O'));
-                            case 2 -> sendMessage(new ConnectToGame(gameName, null, 'X'));
-                            default -> sendMessage(new ConnectToGame(gameName, null, 'S'));
-                        }
+                        server.updateManager(message);
+                    } else if (message instanceof PlayerMoveSend) {
+                        server.updateController(message);
+                    } else if (message instanceof UpdateGame) {
+                        server.updateManager(message);
                     } else if (message instanceof ServerConnection) {
-                        if (!((ServerConnection) message).connection()) {
-                            server.removeUser(userName, this);
+                        if (!((ServerConnection)message).connection()) {
+                            server.updateManager(message);
+                            server.removeUserThread(this);
                             socket.close();
                             server.print("User " + userName + " has quit\n");
                             break;
                         }
-                    } else if (message instanceof PlayerMoveSend) {
-                        UserThread controller = server.getGameController();
-                        controller.sendMessage(message);
                     }
                 }
-            } else if (message instanceof GameControllerConnection) {
+            } else if (Objects.equals(((ServerConnection)message).connectType(), "Controller")) {
                 server.addGameController(this);
                 server.print("Starting thread for Game Controller " + inetAddress.getHostName() + " at " + new Date() + '\n');
-                char [] boardState = { 'X', '\0', 'X', 'O', '\0', 'O', '\0', '\0', '\0', '\0',};
-                outputToClient.writeObject(new PlayerMoveSend("Test", 'X', 1, boardState));
-                outputToClient.flush();
-                PlayerMoveResult testMove = (PlayerMoveResult) inputFromClient.readObject();
-                if (Objects.equals(testMove.result(), "X")) server.print("Test move result from Game Controller successful. " +  "\n");
-
+                char [] boardState = { 'X', '\0', 'X', 'O', '\0', 'O', '\0', '\0', '\0', '\0' };
+                output.writeObject(new PlayerMoveSend("Test", 'X', 1, boardState));
+                output.flush();
+                PlayerMoveResult testMove = (PlayerMoveResult)input.readObject();
+                if (Objects.equals(testMove.result(), "X0")) server.print("Test move result from Game Controller successful. " +  "\n");
                 while (true) {
-                    message = inputFromClient.readObject();
-                    if (message instanceof PlayerMoveSend) {
-                        server.print("Returning move to " + ((PlayerMoveSend) message).GameName() + "\n");
-                        server.updateGameList(this);
-                    } else if (message instanceof GameControllerConnection) {
-                        if (!((GameControllerConnection) message).connection()) {
+                    message = input.readObject();
+                    if (message instanceof PlayerMoveResult) {
+                        server.updateManager(message);
+                    } else if (message instanceof ServerConnection) {
+                        if (!((ServerConnection)message).connection()) {
+                            server.removeGameController();
+                            socket.close();
+                            server.print("Game Controller removed\n");
                             break;
                         }
-                    } else if (message instanceof PlayerMoveResult) {
-                        server.broadcastMove(((PlayerMoveResult) message).GameName(), (PlayerMoveResult) message);
+                    }
+                }
+            } else if (Objects.equals(((ServerConnection)message).connectType(), "Manager")) {
+                server.addGameManager(this);
+                server.print("Starting thread for Game Manager " + inetAddress.getHostName() + " at " + new Date() + '\n');
+                while (true) {
+                    message = input.readObject();
+                    if (message instanceof UpdateGame) {
+                        server.updatePlayer(message);
+                    } else if (message instanceof GameListResult) {
+                        server.updatePlayer(message);
+                    } else if (message instanceof ServerConnection) {
+                        if (!((ServerConnection)message).connection()) {
+                            server.removeGameManager();
+                            socket.close();
+                            server.print("Game Manager Removed\n");
+                            break;
+                        }
                     }
                 }
             }
         } catch (IOException | ClassNotFoundException ex) {
-            server.print(ex.getMessage());
+            server.print("Connection Error: " + ex.getMessage());
         }
     }
 
     public void sendMessage(Object message) {
         try {
-            outputToClient.writeObject(message);
-            outputToClient.flush();
+            output.writeObject(message);
+            output.flush();
         } catch(IOException ex) {
-            server.print(ex.getMessage());
+            server.print("Error Sending Message: " + ex.getMessage());
         }
+    }
+
+    public String getUserName() {
+        return userName;
     }
 }

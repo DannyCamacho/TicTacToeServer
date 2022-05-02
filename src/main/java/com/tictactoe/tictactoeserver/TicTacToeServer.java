@@ -8,17 +8,16 @@ import java.util.*;
 
 public class TicTacToeServer {
     private final int port;
-    private ServerSocket serverSocket;
     private final ServerController controller;
+    private final Set<UserThread> userThreads;
+    private ServerSocket serverSocket;
     private UserThread gameController;
-    private Set<String> userNames = new HashSet<>();
-    private Set<String> games = new HashSet<>();
-    private Map<String, List<UserThread>> gameMap = new HashMap<>();
-    private Set<UserThread> userThreads = new HashSet<>();
+    private UserThread gameManager;
 
     public TicTacToeServer(int port, ServerController controller) {
         this.port = port;
         this.controller = controller;
+        userThreads = new HashSet<>();
     }
 
     public void execute() {
@@ -26,7 +25,6 @@ public class TicTacToeServer {
             try {
                 serverSocket = new ServerSocket(port);
                 print("Tic-Tac-Toe Server started at " + new Date() + '\n');
-
                 while (true) {
                     Socket socket = serverSocket.accept();
                     UserThread newUser = new UserThread(socket, this);
@@ -39,23 +37,34 @@ public class TicTacToeServer {
         }).start();
     }
 
-    void updateGameList(UserThread user) {
-        user.sendMessage(new GameListResult(games));
-    }
-
-    void broadcastMove(String gameName, PlayerMoveResult move) throws IOException {
-        List<UserThread> current = gameMap.get(gameName);
-        for (UserThread aUser : current) {
-            aUser.sendMessage(move);
-        }
-    }
-
     void print(String message) {
         Platform.runLater( () -> controller.update(message));
     }
 
-    void addUserName(String userName) {
-        userNames.add(userName);
+    void updatePlayer(Object message) {
+        if (message instanceof GameListResult) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((GameListResult) message).userName())) {
+                    user.sendMessage(message);
+                }
+            }
+        } else if (message instanceof UpdateGame) {
+            for (String player : ((UpdateGame)message).users().keySet()) {
+                for (UserThread user : userThreads) {
+                    if (Objects.equals(user.getUserName(), player)) {
+                        user.sendMessage(message);
+                    }
+                }
+            }
+        }
+    }
+
+    void updateController(Object message) {
+        gameController.sendMessage(message);
+    }
+
+    void updateManager(Object message) {
+        gameManager.sendMessage(message);
     }
 
     void addUserThread(UserThread userThread) {
@@ -66,43 +75,19 @@ public class TicTacToeServer {
         this.gameController = gameController;
     }
 
-    Boolean addGame(String game) {
-        for (String gameExists : games) {
-            if (Objects.equals(gameExists, game))
-                return false;
-        }
-        games.add(game);
-        return true;
+    void addGameManager(UserThread gameManager) {
+        this.gameManager = gameManager;
     }
 
-    int addPlayerToGame(String game, UserThread user) {
-        List<UserThread> current = gameMap.computeIfAbsent(game, k -> new ArrayList<UserThread>());
-        current.add(user);
-        return current.size();
+    void removeUserThread(UserThread aUser) {
+        userThreads.remove(aUser);
     }
 
-    void removeUser(String userName, UserThread aUser) {
-        boolean removed = userNames.remove(userName);
-        if (removed) userThreads.remove(aUser);
+    void removeGameController() {
+        gameController = null;
     }
 
-    void removeGame(String game) {
-        games.remove(game);
-    }
-
-    Set<String> getUserNames() {
-        return this.userNames;
-    }
-
-    boolean hasUsers() {
-        return !this.userNames.isEmpty();
-    }
-
-    boolean hasGames() {
-        return !this.games.isEmpty();
-    }
-
-    UserThread getGameController() {
-        return gameController;
+    void removeGameManager() {
+        gameManager = null;
     }
 }
