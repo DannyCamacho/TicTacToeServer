@@ -31,6 +31,7 @@ public class UserThread extends Thread {
                 server.print("Client's username is " + userName + " (IP Address: " + inetAddress.getHostAddress() + ")\n");
                 server.updateManager(message);
                 server.updateManager(new GameListRequest(userName));
+                sendMessage(new ServerConnection("Connected", userName, true));
                 while (true) {
                     message = input.readObject();
                     if (message instanceof GameListRequest) {
