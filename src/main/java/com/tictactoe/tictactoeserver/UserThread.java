@@ -93,6 +93,22 @@ public class UserThread extends Thread {
                         }
                     }
                 }
+            } else if (Objects.equals(((ServerConnection)message).connectType(), "Minimax")) {
+                server.addGameManager(this);
+                server.print("Starting thread for Minimax AI " + inetAddress.getHostName() + " at " + new Date() + '\n');
+                while (true) {
+                    message = input.readObject();
+                    if (message instanceof PlayerMoveSend) {
+                        server.updateController(message);
+                    } else if (message instanceof ServerConnection) {
+                        if (!((ServerConnection)message).connection()) {
+                            server.removeGameManager();
+                            socket.close();
+                            server.print("Minimax AI Removed\n");
+                            break;
+                        }
+                    }
+                }
             }
         } catch (IOException | ClassNotFoundException ex) {
             server.print("Connection Error: " + ex.getMessage());
