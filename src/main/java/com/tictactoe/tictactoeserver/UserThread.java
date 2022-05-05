@@ -82,6 +82,8 @@ public class UserThread extends Thread {
                         server.updatePlayer(message);
                     } else if (message instanceof GameListResult) {
                         server.updatePlayer(message);
+                    } else if (message instanceof ConnectToGame) {
+                        server.updatePlayer(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             server.removeGameManager();

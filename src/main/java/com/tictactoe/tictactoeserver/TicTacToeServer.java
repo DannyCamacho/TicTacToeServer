@@ -56,6 +56,12 @@ public class TicTacToeServer {
                     }
                 }
             }
+        } else if (message instanceof ConnectToGame) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((ConnectToGame) message).userName())) {
+                    user.sendMessage(message);
+                }
+            }
         }
     }
 
