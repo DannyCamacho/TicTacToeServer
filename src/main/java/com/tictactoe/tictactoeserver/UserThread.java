@@ -30,7 +30,6 @@ public class UserThread extends Thread {
                 server.print("Starting thread for Client " + inetAddress.getHostName() + " at " + new Date() + '\n');
                 server.print("Client's username is " + userName + " (IP Address: " + inetAddress.getHostAddress() + ")\n");
                 server.updateManager(message);
-                server.updateManager(new GameListRequest(userName));
                 sendMessage(new ServerConnection("Connected", userName, true));
                 while (true) {
                     message = input.readObject();
@@ -42,8 +41,11 @@ public class UserThread extends Thread {
                         server.updateController(message);
                     } else if (message instanceof UpdateGame) {
                         server.updateManager(message);
+                    } else if (message instanceof MinimaxMoveSend) {
+                        server.updateMinimax(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
+                            sendMessage(new ServerConnection("Disconnect", userName, false));
                             server.updateManager(message);
                             server.removeUserThread(this);
                             socket.close();
@@ -94,7 +96,7 @@ public class UserThread extends Thread {
                     }
                 }
             } else if (Objects.equals(((ServerConnection)message).connectType(), "Minimax")) {
-                server.addGameManager(this);
+                server.addMinimax(this);
                 server.print("Starting thread for Minimax AI " + inetAddress.getHostName() + " at " + new Date() + '\n');
                 while (true) {
                     message = input.readObject();
@@ -102,7 +104,7 @@ public class UserThread extends Thread {
                         server.updateController(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
-                            server.removeGameManager();
+                            server.removeMinimax();
                             socket.close();
                             server.print("Minimax AI Removed\n");
                             break;

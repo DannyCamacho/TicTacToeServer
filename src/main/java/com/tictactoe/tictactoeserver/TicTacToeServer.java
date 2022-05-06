@@ -13,6 +13,7 @@ public class TicTacToeServer {
     private ServerSocket serverSocket;
     private UserThread gameController;
     private UserThread gameManager;
+    private UserThread minimax;
 
     public TicTacToeServer(int port, ServerController controller) {
         this.port = port;
@@ -73,6 +74,10 @@ public class TicTacToeServer {
         gameManager.sendMessage(message);
     }
 
+    void updateMinimax(Object message) {
+        minimax.sendMessage(message);
+    }
+
     void addUserThread(UserThread userThread) {
         userThreads.add(userThread);
     }
@@ -85,6 +90,10 @@ public class TicTacToeServer {
         this.gameManager = gameManager;
     }
 
+    void addMinimax(UserThread minimax) {
+        this.minimax = minimax;
+    }
+
     void removeUserThread(UserThread aUser) {
         userThreads.remove(aUser);
     }
@@ -95,5 +104,9 @@ public class TicTacToeServer {
 
     void removeGameManager() {
         gameManager = null;
+    }
+
+    void removeMinimax() {
+        minimax = null;
     }
 }
