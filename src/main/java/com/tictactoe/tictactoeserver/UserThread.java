@@ -30,7 +30,7 @@ public class UserThread extends Thread {
                 server.print("Starting thread for Client " + inetAddress.getHostName() + " at " + new Date() + '\n');
                 server.print("Client's username is " + userName + " (IP Address: " + inetAddress.getHostAddress() + ")\n");
                 server.updateManager(message);
-                sendMessage(new ServerConnection("Connected", userName, true));
+                sendMessage(new ServerConnection("Player", userName, true));
                 while (true) {
                     message = input.readObject();
                     if (message instanceof GameListRequest) {
@@ -41,11 +41,9 @@ public class UserThread extends Thread {
                         server.updateController(message);
                     } else if (message instanceof UpdateGame) {
                         server.updateManager(message);
-                    } else if (message instanceof MinimaxMoveSend) {
-                        server.updateMinimax(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
-                            sendMessage(new ServerConnection("Disconnect", userName, false));
+                            sendMessage(new ServerConnection("Player", userName, false));
                             server.updateManager(message);
                             server.removeUserThread(this);
                             socket.close();
@@ -86,6 +84,8 @@ public class UserThread extends Thread {
                         server.updatePlayer(message);
                     } else if (message instanceof ConnectToGame) {
                         server.updatePlayer(message);
+                    } else if (message instanceof MinimaxMoveSend) {
+                        server.updateMinimax(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             server.removeGameManager();

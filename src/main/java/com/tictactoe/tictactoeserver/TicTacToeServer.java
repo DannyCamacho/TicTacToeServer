@@ -50,16 +50,16 @@ public class TicTacToeServer {
                 }
             }
         } else if (message instanceof UpdateGame) {
-            for (String player : ((UpdateGame)message).users().keySet()) {
+            for (int i = 0; i < ((UpdateGame) message).userTokens().length; i = i + 2) {
                 for (UserThread user : userThreads) {
-                    if (Objects.equals(user.getUserName(), player)) {
+                    if (Objects.equals(user.getUserName(), ((UpdateGame) message).userTokens()[i])) {
                         user.sendMessage(message);
                     }
                 }
             }
         } else if (message instanceof ConnectToGame) {
             for (UserThread user : userThreads) {
-                if (Objects.equals(user.getUserName(), ((ConnectToGame) message).userName())) {
+                if (Objects.equals(user.getUserName(), ((ConnectToGame)message).userName())) {
                     user.sendMessage(message);
                 }
             }
