@@ -41,6 +41,8 @@ public class UserThread extends Thread {
                         server.updateController(message);
                     } else if (message instanceof UpdateGame) {
                         server.updateManager(message);
+                    } else if (message instanceof ChatMessage) {
+                        server.updateManager(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             sendMessage(new ServerConnection("Player", userName, false));
@@ -86,6 +88,8 @@ public class UserThread extends Thread {
                         server.updatePlayer(message);
                     } else if (message instanceof MinimaxMoveSend) {
                         server.updateMinimax(message);
+                    } else if (message instanceof ChatMessage) {
+                        server.updatePlayer(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             server.removeGameManager();
