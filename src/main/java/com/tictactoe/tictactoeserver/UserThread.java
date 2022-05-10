@@ -81,15 +81,15 @@ public class UserThread extends Thread {
                 while (true) {
                     message = input.readObject();
                     if (message instanceof UpdateGame) {
-                        server.updatePlayer(message);
+                        server.updatePlayer(message, getUserName());
                     } else if (message instanceof GameListResult) {
-                        server.updatePlayer(message);
+                        server.updatePlayer(message, getUserName());
                     } else if (message instanceof ConnectToGame) {
-                        server.updatePlayer(message);
+                        server.updatePlayer(message, getUserName());
+                    } else if (message instanceof ChatMessage) {
+                        server.updatePlayer(message, getUserName());
                     } else if (message instanceof MinimaxMoveSend) {
                         server.updateMinimax(message);
-                    } else if (message instanceof ChatMessage) {
-                        server.updatePlayer(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             server.removeGameManager();

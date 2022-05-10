@@ -1,6 +1,5 @@
 package com.tictactoe.tictactoeserver;
 
-import com.tictactoe.message.*;
 import javafx.application.Platform;
 import java.io.IOException;
 import java.net.*;
@@ -9,7 +8,7 @@ import java.util.*;
 public class TicTacToeServer {
     private final int port;
     private final ServerController controller;
-    private final Set<UserThread> userThreads;
+    private final Map<String, UserThread> players;
     private ServerSocket serverSocket;
     private UserThread gameController;
     private UserThread gameManager;
@@ -18,7 +17,7 @@ public class TicTacToeServer {
     public TicTacToeServer(int port, ServerController controller) {
         this.port = port;
         this.controller = controller;
-        userThreads = new HashSet<>();
+        players = new HashMap<>();
     }
 
     public void execute() {
@@ -42,34 +41,8 @@ public class TicTacToeServer {
         Platform.runLater( () -> controller.update(message));
     }
 
-    void updatePlayer(Object message) {
-        if (message instanceof GameListResult) {
-            for (UserThread user : userThreads) {
-                if (Objects.equals(user.getUserName(), ((GameListResult) message).userName())) {
-                    user.sendMessage(message);
-                }
-            }
-        } else if (message instanceof UpdateGame) {
-            for (int i = 0; i < ((UpdateGame) message).userTokens().length; i = i + 2) {
-                for (UserThread user : userThreads) {
-                    if (Objects.equals(user.getUserName(), ((UpdateGame) message).userTokens()[i])) {
-                        user.sendMessage(message);
-                    }
-                }
-            }
-        } else if (message instanceof ConnectToGame) {
-            for (UserThread user : userThreads) {
-                if (Objects.equals(user.getUserName(), ((ConnectToGame)message).userName())) {
-                    user.sendMessage(message);
-                }
-            }
-        } else if (message instanceof ChatMessage) {
-            for (UserThread user : userThreads) {
-                if (Objects.equals(user.getUserName(), ((ChatMessage) message).userName())) {
-                    user.sendMessage(message);
-                }
-            }
-        }
+    void updatePlayer(Object message, String player) {
+        players.get(player).sendMessage(message);
     }
 
     void updateController(Object message) {
@@ -85,7 +58,7 @@ public class TicTacToeServer {
     }
 
     void addUserThread(UserThread userThread) {
-        userThreads.add(userThread);
+        players.put(userThread.getUserName(), userThread);
     }
 
     void addGameController(UserThread gameController) {
@@ -100,8 +73,8 @@ public class TicTacToeServer {
         this.minimax = minimax;
     }
 
-    void removeUserThread(UserThread aUser) {
-        userThreads.remove(aUser);
+    void removeUserThread(UserThread user) {
+        players.remove(user.getUserName());
     }
 
     void removeGameController() {
