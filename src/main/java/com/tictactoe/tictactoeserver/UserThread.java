@@ -31,10 +31,8 @@ public class UserThread extends Thread {
                 server.print("Client's username is " + userName + " (IP Address: " + inetAddress.getHostAddress() + ")\n");
                 server.updateManager(message);
                 sendMessage(new ServerConnection("Player", userName, true));
-
                 while (true) {
                     message = input.readObject();
-                    System.out.println(message);
                     if (message instanceof GameListRequest) {
                         server.updateManager(message);
                     } else if (message instanceof ConnectToGame) {
@@ -83,17 +81,15 @@ public class UserThread extends Thread {
                 while (true) {
                     message = input.readObject();
                     if (message instanceof UpdateGame) {
-                        server.updatePlayer(message, getUserName());
+                        server.updatePlayer(message);
                     } else if (message instanceof GameListResult) {
-                        server.updatePlayer(message, getUserName());
+                        server.updatePlayer(message);
                     } else if (message instanceof ConnectToGame) {
-                        server.updatePlayer(message, getUserName());
-                    } else if (message instanceof ChatMessage) {
-                        server.updatePlayer(message, getUserName());
-                    } else if (message instanceof UpdateGameHistory) {
-                        server.updatePlayer(message, getUserName());
+                        server.updatePlayer(message);
                     } else if (message instanceof MinimaxMoveSend) {
                         server.updateMinimax(message);
+                    } else if (message instanceof ChatMessage) {
+                        server.updatePlayer(message);
                     } else if (message instanceof ServerConnection) {
                         if (!((ServerConnection)message).connection()) {
                             server.removeGameManager();

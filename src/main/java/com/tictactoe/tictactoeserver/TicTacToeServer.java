@@ -1,5 +1,6 @@
 package com.tictactoe.tictactoeserver;
 
+import com.tictactoe.message.*;
 import javafx.application.Platform;
 import java.io.IOException;
 import java.net.*;
@@ -8,7 +9,7 @@ import java.util.*;
 public class TicTacToeServer {
     private final int port;
     private final ServerController controller;
-    private final Set<UserThread> players;
+    private final Set<UserThread> userThreads;
     private ServerSocket serverSocket;
     private UserThread gameController;
     private UserThread gameManager;
@@ -17,7 +18,7 @@ public class TicTacToeServer {
     public TicTacToeServer(int port, ServerController controller) {
         this.port = port;
         this.controller = controller;
-        players = new HashSet<>();
+        userThreads = new HashSet<>();
     }
 
     public void execute() {
@@ -41,11 +42,32 @@ public class TicTacToeServer {
         Platform.runLater( () -> controller.update(message));
     }
 
-    void updatePlayer(Object message, String userName) {
-        for (UserThread player : players) {
-            System.out.println(player + " " + player.getUserName());
-            if (Objects.equals(player.getUserName(), userName)) {
-                player.sendMessage(message);
+    void updatePlayer(Object message) {
+        if (message instanceof GameListResult) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((GameListResult) message).userName())) {
+                    user.sendMessage(message);
+                }
+            }
+        } else if (message instanceof UpdateGame) {
+            for (int i = 0; i < ((UpdateGame) message).userTokens().length; i = i + 2) {
+                for (UserThread user : userThreads) {
+                    if (Objects.equals(user.getUserName(), ((UpdateGame) message).userTokens()[i])) {
+                        user.sendMessage(message);
+                    }
+                }
+            }
+        } else if (message instanceof ConnectToGame) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((ConnectToGame)message).userName())) {
+                    user.sendMessage(message);
+                }
+            }
+        } else if (message instanceof ChatMessage) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((ChatMessage) message).userName())) {
+                    user.sendMessage(message);
+                }
             }
         }
     }
@@ -63,26 +85,23 @@ public class TicTacToeServer {
     }
 
     void addUserThread(UserThread userThread) {
-        players.add(userThread);
+        userThreads.add(userThread);
     }
 
     void addGameController(UserThread gameController) {
         this.gameController = gameController;
-        players.remove(gameController);
     }
 
     void addGameManager(UserThread gameManager) {
         this.gameManager = gameManager;
-        players.remove(gameManager);
     }
 
     void addMinimax(UserThread minimax) {
         this.minimax = minimax;
-        players.remove(minimax);
     }
 
-    void removeUserThread(UserThread user) {
-        players.remove(user);
+    void removeUserThread(UserThread aUser) {
+        userThreads.remove(aUser);
     }
 
     void removeGameController() {
