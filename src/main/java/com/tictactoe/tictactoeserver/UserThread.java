@@ -88,6 +88,8 @@ public class UserThread extends Thread {
                         server.updatePlayer(message, getUserName());
                     } else if (message instanceof ChatMessage) {
                         server.updatePlayer(message, getUserName());
+                    } else if (message instanceof UpdateGameHistory) {
+                        server.updatePlayer(message, getUserName());
                     } else if (message instanceof MinimaxMoveSend) {
                         server.updateMinimax(message);
                     } else if (message instanceof ServerConnection) {
