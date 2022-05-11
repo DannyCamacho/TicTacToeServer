@@ -8,7 +8,7 @@ import java.util.*;
 public class TicTacToeServer {
     private final int port;
     private final ServerController controller;
-    private final Map<String, UserThread> players;
+    private final Set<UserThread> players;
     private ServerSocket serverSocket;
     private UserThread gameController;
     private UserThread gameManager;
@@ -17,7 +17,7 @@ public class TicTacToeServer {
     public TicTacToeServer(int port, ServerController controller) {
         this.port = port;
         this.controller = controller;
-        players = new HashMap<>();
+        players = new HashSet<>();
     }
 
     public void execute() {
@@ -41,8 +41,13 @@ public class TicTacToeServer {
         Platform.runLater( () -> controller.update(message));
     }
 
-    void updatePlayer(Object message, String player) {
-        players.get(player).sendMessage(message);
+    void updatePlayer(Object message, String userName) {
+        for (UserThread player : players) {
+            System.out.println(player + " " + player.getUserName());
+            if (Objects.equals(player.getUserName(), userName)) {
+                player.sendMessage(message);
+            }
+        }
     }
 
     void updateController(Object message) {
@@ -58,23 +63,26 @@ public class TicTacToeServer {
     }
 
     void addUserThread(UserThread userThread) {
-        players.put(userThread.getUserName(), userThread);
+        players.add(userThread);
     }
 
     void addGameController(UserThread gameController) {
         this.gameController = gameController;
+        players.remove(gameController);
     }
 
     void addGameManager(UserThread gameManager) {
         this.gameManager = gameManager;
+        players.remove(gameManager);
     }
 
     void addMinimax(UserThread minimax) {
         this.minimax = minimax;
+        players.remove(minimax);
     }
 
     void removeUserThread(UserThread user) {
-        players.remove(user.getUserName());
+        players.remove(user);
     }
 
     void removeGameController() {
