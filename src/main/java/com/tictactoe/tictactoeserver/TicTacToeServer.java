@@ -27,8 +27,7 @@ public class TicTacToeServer {
                 print("Tic-Tac-Toe Server started at " + new Date() + '\n');
                 while (true) {
                     Socket socket = serverSocket.accept();
-                    UserThread newUser = new UserThread(socket, this);
-                    newUser.start();
+                    new UserThread(socket, this).start();
                 }
             } catch(IOException ex) {
                 print(ex.getMessage());

@@ -53,24 +53,6 @@ public class UserThread extends Thread {
                         break;
                     }
                 }
-            } else if (Objects.equals(((ServerConnection)message).connectType(), "Controller")) {
-                server.addGameController(this);
-                server.print("Starting thread for Game Controller " + inetAddress.getHostName() + " at " + new Date() + '\n');
-                char [] boardState = { 'X', '\0', 'X', 'O', '\0', 'O', '\0', '\0', '\0', '\0' };
-                server.updateController(new PlayerMoveSend("Test", 'X', 1, boardState));
-                message = input.readObject();
-                if (Objects.equals(((PlayerMoveResult)message).result(), "X0")) server.print("Test move result from Game Controller successful. " +  "\n");
-                while (true) {
-                    message = input.readObject();
-                    if (message instanceof PlayerMoveResult) {
-                        server.updateManager(message);
-                    } else if (message instanceof ServerConnection && !((ServerConnection)message).connection()) {
-                        server.removeGameController();
-                        socket.close();
-                        server.print("Game Controller removed\n");
-                        break;
-                    }
-                }
             } else if (Objects.equals(((ServerConnection)message).connectType(), "Manager")) {
                 server.addGameManager(this);
                 server.print("Starting thread for Game Manager " + inetAddress.getHostName() + " at " + new Date() + '\n');
@@ -90,6 +72,20 @@ public class UserThread extends Thread {
                         server.removeGameManager();
                         socket.close();
                         server.print("Game Manager Removed\n");
+                        break;
+                    }
+                }
+            } else if (Objects.equals(((ServerConnection)message).connectType(), "Controller")) {
+                server.addGameController(this);
+                server.print("Starting thread for Game Controller " + inetAddress.getHostName() + " at " + new Date() + '\n');
+                while (true) {
+                    message = input.readObject();
+                    if (message instanceof PlayerMoveResult) {
+                        server.updateManager(message);
+                    } else if (message instanceof ServerConnection && !((ServerConnection)message).connection()) {
+                        server.removeGameController();
+                        socket.close();
+                        server.print("Game Controller removed\n");
                         break;
                     }
                 }
