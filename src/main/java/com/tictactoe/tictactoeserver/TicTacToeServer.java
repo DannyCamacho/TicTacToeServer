@@ -40,7 +40,13 @@ public class TicTacToeServer {
     }
 
     void updatePlayer(Object message) {
-        if (message instanceof GameListResult) {
+        if (message instanceof ServerConnection) {
+            for (UserThread user : userThreads) {
+                if (Objects.equals(user.getUserName(), ((ServerConnection)message).userName())) {
+                    user.sendMessage(message);
+                }
+            }
+        } else if (message instanceof GameListResult) {
             for (UserThread user : userThreads) {
                 if (Objects.equals(user.getUserName(), ((GameListResult)message).userName())) {
                     user.sendMessage(message);
