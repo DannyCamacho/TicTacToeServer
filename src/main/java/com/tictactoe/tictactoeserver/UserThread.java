@@ -68,6 +68,8 @@ public class UserThread extends Thread {
                         server.updatePlayer(message);
                     } else if (message instanceof MinimaxMoveSend) {
                         server.updateMinimax(message);
+                    } else if (message instanceof UpdateGameHistory) {
+                        server.updatePlayer(message);
                     } else if (message instanceof ServerConnection && !((ServerConnection)message).connection()) {
                         server.removeGameManager();
                         socket.close();
