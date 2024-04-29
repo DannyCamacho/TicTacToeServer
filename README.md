@@ -27,7 +27,7 @@ Tic-Tac-Toe Online Client: https://github.com/DannyCamacho/TicTacToeMinimax
 
 
 ## Additional Clients Connected
-![image](https://github.com/DannyCamacho/TicTacToeServer/assets/91514165/db2126bf-c81e-473c-9507-cfea6bd66e61)
+![image](https://github.com/DannyCamacho/TicTacToeServer/assets/91514165/f67fcf7d-2770-4c94-8ea0-538b6bc20818)
 
 
 ## Clients Disconnected
